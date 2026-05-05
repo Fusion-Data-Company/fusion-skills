@@ -1,10 +1,25 @@
 {
   "rewrites": [
-    { "source": "/api/webhook/:slug", "destination": "/api/webhook?slug=:slug" },
-    { "source": "/api/tenants/:slug", "destination": "/api/tenants?slug=:slug" }
+    {
+      "source": "/api/webhook/:slug",
+      "destination": "/api/webhook?slug=:slug"
+    },
+    {
+      "source": "/api/tenants/:slug",
+      "destination": "/api/tenants?slug=:slug"
+    }
   ],
   "functions": {
-    "api/webhook.ts": { "memory": 1024, "maxDuration": 30 },
-    "api/tenants.ts": { "memory": 512, "maxDuration": 10 }
-  }
+    "api/webhook.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "api/tenants.ts": {
+      "memory": 512,
+      "maxDuration": 10
+    }
+  },
+  "outputDirectory": "public",
+  "buildCommand": "mkdir -p public && echo '<h1>Fusion Skills</h1><p>Speed-to-Lead service. API endpoints under /api/*.</p>' > public/index.html",
+  "installCommand": "npm install"
 }
