@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/api/webhook/:slug", "destination": "/api/webhook?slug=:slug" },
+    { "source": "/api/tenants/:slug", "destination": "/api/tenants?slug=:slug" }
+  ],
+  "functions": {
+    "api/webhook.ts": { "memory": 1024, "maxDuration": 30 },
+    "api/tenants.ts": { "memory": 512, "maxDuration": 10 }
+  }
+}

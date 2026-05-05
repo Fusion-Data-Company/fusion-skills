@@ -1,0 +1,21 @@
+{
+  "name": "fusion-skills",
+  "version": "1.0.0",
+  "description": "Fusion Data Company — Universal Skill Service. Multi-tenant Speed-to-Lead service. Any client agent POSTs leads here; we qualify, route, respond, and call back to their CRM.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo 'no build step'"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "@vercel/node": "^5.5.12"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "@types/node": "^20.16.11"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
