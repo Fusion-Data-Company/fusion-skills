@@ -20,6 +20,6 @@
     }
   },
   "outputDirectory": "public",
-  "buildCommand": "mkdir -p public && echo '<h1>Fusion Skills</h1><p>Speed-to-Lead service. API endpoints under /api/*.</p>' > public/index.html",
+  "buildCommand": "echo 'static public/'",
   "installCommand": "npm install"
 }
