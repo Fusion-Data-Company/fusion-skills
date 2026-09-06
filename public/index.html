@@ -1,1 +1,81 @@
-<!doctype html><html><head><title>Fusion Skills</title></head><body><h1>Fusion Skills</h1><p>Speed-to-Lead service. API endpoints under /api/health, /api/webhook/&lt;tenant&gt;, /api/tenants.</p></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Speed-to-Lead — every new lead scored, answered and in your CRM in seconds</title>
+<meta name="description" content="Point your website form, ads or voice agent at one webhook. Speed-to-Lead scores each lead, decides the next action, writes the reply and posts it back to your CRM within seconds. $149/month." />
+<meta property="og:title" content="Speed-to-Lead by Fusion Data Company" />
+<meta property="og:description" content="The five-minute rule, automated. Every lead scored, answered and in your CRM within seconds." />
+<style>
+:root{--bg:#0a0f1a;--ink:#e8eef7;--dim:#93a3b8;--line:rgba(148,163,184,.16);--amber:#f97316;--gold:#f59e0b;--blue:#3b82f6}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(900px 500px at 15% -10%,rgba(249,115,22,.12),transparent 60%),radial-gradient(800px 500px at 90% 0,rgba(59,130,246,.10),transparent 60%),var(--bg);color:var(--ink);font:16px/1.65 -apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:56px 22px 100px}
+h1{font-size:clamp(34px,5.4vw,58px);line-height:1.05;letter-spacing:-.025em;margin:0 0 16px;font-weight:800;background:linear-gradient(135deg,#f97316,#f59e0b,#3b82f6);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:clamp(22px,3vw,30px);margin:56px 0 10px;letter-spacing:-.02em}
+.kicker{font:600 11px/1 sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.lede{font-size:19px;color:var(--ink);max-width:70ch}.dim{color:var(--dim)}
+.card{background:rgba(18,26,42,.72);border:1px solid var(--line);border-radius:22px;padding:24px 26px;margin:18px 0}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.step b{display:block;font-size:22px;color:var(--gold)}.step span{color:var(--dim);font-size:14px}
+.btn{display:inline-block;padding:14px 22px;border-radius:999px;background:linear-gradient(135deg,#f97316,#f59e0b);color:#0a0f1a;font-weight:800;text-decoration:none;font-size:15px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.price{font-size:44px;font-weight:800;letter-spacing:-.02em}.price small{font-size:14px;color:var(--dim);font-weight:500}
+ul{color:var(--dim);max-width:70ch}li{margin:6px 0}li b{color:var(--ink)}
+code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:rgba(12,18,30,.7);border:1px solid var(--line);border-radius:8px;padding:2px 6px}
+pre{overflow:auto;background:rgba(12,18,30,.7);border:1px solid var(--line);border-radius:14px;padding:16px;font-size:13px;color:var(--dim)}
+.foot{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);color:var(--dim);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="kicker">Speed-to-Lead · Fusion Data Company</div>
+<h1>The five-minute rule, automated.<br>Every lead answered in seconds.</h1>
+<p class="lede">Point your website form, your ads or your voice agent at one webhook. Speed-to-Lead scores each lead, decides what should happen next, writes the first reply, and posts the whole record back to your CRM before a person on your team has finished reading the notification.</p>
+<p style="margin-top:26px"><a class="btn" href="https://buy.stripe.com/aFa8wPgdJ7dOcQvfJAaAw0e" target="_blank" rel="noopener">Start Speed-to-Lead — $149/month, 14-day trial</a> &nbsp; <a class="btn ghost" href="#how">How it works</a></p>
+
+<h2 id="how">What happens to a lead, in order</h2>
+<div class="grid">
+<div class="card step"><b>1</b>Your site, form, ad or voice agent POSTs the lead to your tenant webhook. Signed, idempotent, nothing lost on retries.<span></span></div>
+<div class="card step"><b>2</b>The lead is scored on a Sandler pain funnel: problem, impact, urgency, budget signal, fit.<span></span></div>
+<div class="card step"><b>3</b>A routing decision is made: call now, book, send info, nurture, or discard as spam.<span></span></div>
+<div class="card step"><b>4</b>A first reply is written in a Verbal Judo tone, ready to send or already sent through your channel.<span></span></div>
+<div class="card step"><b>5</b>Score, action, reply and the full audit trail are posted back to your CRM by webhook. HubSpot, GoHighLevel, or anything with a URL.<span></span></div>
+</div>
+
+<h2>Why it exists</h2>
+<p class="dim" style="max-width:72ch">Leads that get a reply inside five minutes convert many times more often than leads that wait an hour, and almost nobody hits five minutes by hand. Speed-to-Lead makes the first response automatic and consistent, and it hands your team a scored record instead of a raw form submission, so the humans spend their time on the leads that deserve it.</p>
+
+<h2>Works with what you already use</h2>
+<ul>
+<li><b>In:</b> any form, chat, ad platform or voice agent that can POST JSON. Our own LeadLine voice interviewer plugs in natively.</li>
+<li><b>Out:</b> any CRM with a webhook or API. Your CRM, not ours; we write to it, we do not replace it.</li>
+<li><b>Custom orders:</b> tell us the tools you use at checkout and we wire them in during setup.</li>
+</ul>
+<pre>POST https://fusion-skills.vercel.app/api/webhook/&lt;your-tenant&gt;
+x-fusion-signature: hmac-sha256(body, your_secret)
+
+{ "name": "Dana R.", "phone": "+1 702 555 0142", "source": "google-ads",
+  "message": "Need the garage door fixed this week, it won't close" }
+
+→ { "score": 86, "action": "call_now", "reply": "Hi Dana — a door that won't close is a same-day job for us. ..." }</pre>
+
+<h2>Pricing</h2>
+<div class="card">
+<div class="price">$149 <small>per month, per business</small></div>
+<ul>
+<li>Unlimited lead sources into one tenant webhook</li>
+<li>Scoring, routing, generated first reply, CRM callback, full audit log</li>
+<li>Setup within 1 business day: you get your webhook URL, signing secret and callback config by email</li>
+<li>14-day free trial, cancel any time</li>
+</ul>
+<p><a class="btn" href="https://buy.stripe.com/aFa8wPgdJ7dOcQvfJAaAw0e" target="_blank" rel="noopener">Start the trial</a></p>
+</div>
+
+<h2>For developers</h2>
+<p class="dim">Open source under MIT. Endpoints: <code>/api/health</code>, <code>/api/webhook/&lt;tenant&gt;</code>, <code>/api/tenants</code>. Source and docs: <a href="https://github.com/Fusion-Data-Company/fusion-skills" style="color:var(--ink)">github.com/Fusion-Data-Company/fusion-skills</a>.</p>
+
+<div class="foot">Speed-to-Lead is built and run by <a href="https://fusiondataco.com" style="color:var(--ink)">Fusion Data Company</a>. Questions: rob@fusiondataco.com</div>
+</div>
+</body>
+</html>
