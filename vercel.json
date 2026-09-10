@@ -17,6 +17,18 @@
     "api/tenants.ts": {
       "memory": 512,
       "maxDuration": 10
+    },
+    "api/deliver.ts": {
+      "memory": 512,
+      "maxDuration": 30
+    },
+    "api/account.ts": {
+      "memory": 512,
+      "maxDuration": 30
+    },
+    "api/billing.ts": {
+      "memory": 512,
+      "maxDuration": 30
     }
   },
   "outputDirectory": "public",

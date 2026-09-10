@@ -14,12 +14,12 @@ import { neon } from "@neondatabase/serverless";
 import crypto from "crypto";
 
 const sql = neon(process.env.DATABASE_URL!);
-const ADMIN_KEY = process.env.ADMIN_API_KEY || "admin-key-change-in-production";
+const ADMIN_KEY = process.env.ADMIN_API_KEY;
 
 function authed(req: VercelRequest): boolean {
   const h = (req.headers.authorization as string) || "";
   if (!h.startsWith("Bearer ")) return false;
-  return h.slice(7) === ADMIN_KEY;
+  return !!ADMIN_KEY && h.slice(7) === ADMIN_KEY;
 }
 function readBody(req: VercelRequest): any {
   if (typeof req.body === "string") {
@@ -38,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const url = (req.url || "").split("?")[0];
   const slugMatch = url.match(/\/tenants\/([a-z0-9-]+)$/);
-  const slug = slugMatch ? slugMatch[1] : null;
+  const slug = typeof req.query.slug === "string" ? req.query.slug : slugMatch ? slugMatch[1] : null;
 
   try {
     // GET /tenants — list
