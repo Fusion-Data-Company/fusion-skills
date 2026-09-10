@@ -33,5 +33,11 @@
   },
   "outputDirectory": "public",
   "buildCommand": "echo 'static public/'",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "crons": [
+    {
+      "path": "/api/deliver",
+      "schedule": "* * * * *"
+    }
+  ]
 }

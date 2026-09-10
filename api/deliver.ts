@@ -2,8 +2,15 @@ import type {VercelRequest,VercelResponse} from '@vercel/node';
 import crypto from 'node:crypto';
 import {pool,admin,callbackUrl} from '../lib/core';
 export default async function handler(req:VercelRequest,res:VercelResponse){
- if(req.method!=='POST'||!admin(req))return res.status(401).end();
- const input=typeof req.body==='string'?JSON.parse(req.body):req.body||{};
+ const scheduled=req.method==='GET';
+ const expected=process.env.CRON_SECRET;
+ const supplied=req.headers.authorization;
+ const cronAuthorized=!!expected&&typeof supplied==='string'&&Buffer.byteLength(supplied)===Buffer.byteLength(`Bearer ${expected}`)&&crypto.timingSafeEqual(Buffer.from(supplied),Buffer.from(`Bearer ${expected}`));
+ if(scheduled?!cronAuthorized:(req.method!=='POST'||!admin(req)))return res.status(401).end();
+ res.setHeader('Cache-Control','no-store');
+ // Scheduled requests may only process queued work, never approve a review.
+ let input:any={};
+ if(!scheduled){try{input=typeof req.body==='string'?JSON.parse(req.body):req.body||{};}catch{return res.status(400).json({error:'invalid_json'});}}
  if(input.action==='review'){
  if(!['confirmed_delivered','confirmed_not_delivered'].includes(input.decision)||typeof input.evidence!=='string'||input.evidence.trim().length<20)return res.status(400).json({error:'delivery_evidence_required'});
  const c=await pool.connect();try{await c.query('BEGIN');const {rows:[j]}=await c.query("SELECT id FROM fs_jobs WHERE id=$1 AND delivery_status IN ('uncertain','needs_review') FOR UPDATE",[input.jobId]);if(!j){await c.query('ROLLBACK');return res.status(409).json({error:'job_not_reviewable'});}
