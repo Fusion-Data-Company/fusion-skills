@@ -1,7 +1,7 @@
 import type {VercelRequest,VercelResponse} from '@vercel/node';
 import crypto from 'node:crypto';
-import {pool,rawBody,safeEqual} from '../lib/core';
-import {qualifyLead,routeLead,generateResponse} from '../lib/qualification';
+import {pool,rawBody,safeEqual} from '../lib/core.js';
+import {qualifyLead,routeLead,generateResponse} from '../lib/qualification.js';
 export const config={api:{bodyParser:false}};
 export default async function handler(req:VercelRequest,res:VercelResponse){
  if(req.method!=='POST')return res.status(405).end();

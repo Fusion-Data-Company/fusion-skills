@@ -1,6 +1,6 @@
 import type {VercelRequest,VercelResponse} from '@vercel/node';
 import Stripe from 'stripe';
-import {pool,requireConfig,rawBody} from '../lib/core';
+import {pool,requireConfig,rawBody} from '../lib/core.js';
 export const config={api:{bodyParser:false}};
 export default async function handler(req:VercelRequest,res:VercelResponse){
  if(req.method!=='POST')return res.status(405).end();

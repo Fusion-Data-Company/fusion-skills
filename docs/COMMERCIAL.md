@@ -23,3 +23,13 @@ POST action recover_keys reveals only the authenticated buyer tenant's current i
 ## Scheduled delivery
 
 GET /api/deliver requires the exact CRON_SECRET bearer token and cannot execute review actions. POST retains separate admin authorization. The schedule processes one eligible job per minute (up to60/hour without additional authorized worker calls); size capacity before onboarding higher-volume buyers. Expired sends remain uncertain and require evidence-backed review. No callback was sent while implementing the schedule.
+
+## Isolated commercial activation (September 10, 2026)
+
+New commercial deployment uses speedtolead.fusiondataco.com and its own empty Neon database; the original fusion-skills project and any client database remain untouched. Migration 004 adds fs_demo_jobs, which has no tenant foreign key and is never queried by the delivery worker. /demo.html uses shared Fusion sign-in and persists up to30 private demo results per day. It never routes these to CRM or bills the user.
+
+Paid setup supports deliveryMode=workspace, storing results in the authenticated buyer workspace with ready_for_review status. No external request is made for this mode. External CRM receivers remain an optional operator-approved integration. Production delivery is a rule-based assessment and generic response draft, not an automated customer message or an LLM recommendation.
+
+The existing $149/month Stripe price is reused. Checkout and subscription metadata identify speed-to-lead for the shared verified Stripe ingress at shop-demo.fusiondataco.com/api/license/webhook. The original signed body is forwarded to /api/billing. Existing ingress event types are preserved, with subscription created/updated/deleted/paused/resumed added; no seventeenth endpoint is created.
+
+Local real PostgreSQL acceptance: 3 tests,15 assertions cover persisted private demo/replay/conflict/isolation and paid workspace configuration -> inquiry -> ready_for_review without external sends. Provider identity/payment completion still needs signed-in production acceptance. No fake production buyers, leads or orders were inserted.

@@ -1,6 +1,6 @@
 import type {VercelRequest,VercelResponse} from '@vercel/node';
 import crypto from 'node:crypto';
-import {pool,admin,callbackUrl} from '../lib/core';
+import {pool,admin,callbackUrl} from '../lib/core.js';
 export default async function handler(req:VercelRequest,res:VercelResponse){
  const scheduled=req.method==='GET';
  const expected=process.env.CRON_SECRET;
@@ -21,7 +21,7 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
  const token=crypto.randomUUID();const {rows:[job]}=await pool.query(`UPDATE fs_jobs SET delivery_status='sending',lease_token=$1,lease_until=now()+interval '45 seconds',attempts=attempts+1 WHERE id=(SELECT j.id FROM fs_jobs j JOIN fs_accounts a ON a.tenant_id=j.tenant_id WHERE j.delivery_status='pending' AND j.available_at<=now() AND a.access_until>now() AND a.billing_status IN ('active','trialing') ORDER BY j.created_at FOR UPDATE OF j SKIP LOCKED LIMIT 1) RETURNING *`,[token]);
  if(!job)return res.json({claimed:false});
  let status='uncertain',http:number|null=null;
- try{const {rows:[tenant]}=await pool.query('SELECT * FROM fs_tenants WHERE id=$1',[job.tenant_id]);const url=callbackUrl(tenant.crm_webhook_url);const ts=Math.floor(Date.now()/1000).toString();const body=JSON.stringify({event:'lead.review_ready',event_id:job.id,tenant_slug:tenant.slug,result:job.result,notice:'Draft and recommendation only. CRM recipient must enforce consent before any customer contact.'});
+ try{const {rows:[tenant]}=await pool.query('SELECT * FROM fs_tenants WHERE id=$1',[job.tenant_id]);if(tenant.crm_webhook_url==='workspace://local'){await pool.query("UPDATE fs_jobs SET delivery_status='ready_for_review',lease_until=NULL,updated_at=now() WHERE id=$1 AND lease_token=$2",[job.id,token]);return res.json({claimed:true,id:job.id,status:'ready_for_review'});}const url=callbackUrl(tenant.crm_webhook_url);const ts=Math.floor(Date.now()/1000).toString();const body=JSON.stringify({event:'lead.review_ready',event_id:job.id,tenant_slug:tenant.slug,result:job.result,notice:'Draft and recommendation only. CRM recipient must enforce consent before any customer contact.'});
  const signature=crypto.createHmac('sha256',tenant.crm_webhook_hmac_secret).update(`${ts}.${body}`).digest('hex');
  const response=await fetch(url,{method:'POST',redirect:'error',signal:AbortSignal.timeout(15000),headers:{'Content-Type':'application/json','Idempotency-Key':job.id,'X-FusionSkills-Timestamp':ts,'X-FusionSkills-Signature':signature},body});http=response.status;status=response.ok?'delivered':'needs_review';
  }catch{/* Timeouts and network errors do not prove absence of delivery. */}
