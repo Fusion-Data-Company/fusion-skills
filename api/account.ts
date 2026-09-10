@@ -33,7 +33,7 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
  if(current.metadata.buyer_id!==user.id)throw new Error('subscription_owner_mismatch');
  const sub=current.status==='canceled'?current:await stripe.subscriptions.update(current.id,{cancel_at_period_end:true},{idempotencyKey:`cancel-at-end-${current.id}`});
  const until=['active','trialing'].includes(sub.status)?sub.items.data[0].current_period_end:0;
- await c.query('UPDATE fs_accounts SET cancel_at_period_end=$3,billing_status=$4,access_until=to_timestamp($5),updated_at=now() WHERE buyer_id=$1 AND subscription_id=$2',[user.id,sub.id,sub.cancel_at_period_end,sub.status,until]);
+ await c.query('UPDATE fs_accounts SET cancel_at_period_end=$3,billing_status=$4,access_until=LEAST(access_until,to_timestamp($5)),updated_at=now() WHERE buyer_id=$1 AND subscription_id=$2',[user.id,sub.id,sub.cancel_at_period_end,sub.status,until]);
  await c.query('COMMIT');return res.json({cancelAtPeriodEnd:sub.cancel_at_period_end,status:sub.status,accessUntil:until,notice:'Renewal stopped at the end of the current period. This does not issue a refund.'});
  }catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}}
  if(body.action==='recover_keys'||body.action==='rotate_incoming_key'){
@@ -52,7 +52,7 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
  const notes=typeof body.notes==='string'?body.notes.trim():'';
  const requestId=String(body.requestId||'');
  if(!notes||notes.length>20000||!/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(requestId))throw new Error('notes_and_request_id_required');
- const {rows:[tenant]}=await pool.query("SELECT t.* FROM fs_tenants t JOIN fs_accounts a ON a.tenant_id=t.id WHERE a.buyer_id=$1 AND a.access_until>now() AND a.billing_status IN ('active','trialing')",[user.id]);
+ const {rows:[tenant]}=await pool.query("SELECT t.* FROM fs_tenants t JOIN fs_accounts a ON a.tenant_id=t.id WHERE a.buyer_id=$1 AND a.access_until>now() AND a.billing_status IN ('active','trialing') AND a.billing_invoice_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM fs_payment_holds h WHERE h.invoice_id=a.billing_invoice_id AND h.held)",[user.id]);
  if(!tenant)throw new Error('configured_active_subscription_required');
  const contact={name:String(body.name||'').trim().slice(0,200),email:String(body.email||'').trim().slice(0,254)};
  const payload={notes,contact,permitted_response:body.permittedResponse===true};
@@ -65,7 +65,7 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
  }
  if(body.action==='configure'){
  const business=String(body.businessName||'').trim();if(!business||business.length>200)throw new Error('business_name_required');const url=body.deliveryMode==='workspace'?'workspace://local':callbackUrl(String(body.callbackUrl||''));
- const c=await pool.connect();try{await c.query('BEGIN');const {rows:[a]}=await c.query("SELECT * FROM fs_accounts WHERE buyer_id=$1 AND access_until>now() AND billing_status IN ('active','trialing') FOR UPDATE",[user.id]);if(!a)throw new Error('active_subscription_required');
+ const c=await pool.connect();try{await c.query('BEGIN');const {rows:[a]}=await c.query("SELECT * FROM fs_accounts WHERE buyer_id=$1 AND access_until>now() AND billing_status IN ('active','trialing') AND billing_invoice_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM fs_payment_holds h WHERE h.invoice_id=fs_accounts.billing_invoice_id AND h.held) FOR UPDATE",[user.id]);if(!a)throw new Error('active_subscription_required');
  if(a.tenant_id)throw new Error('already_configured_use_key_recovery');
  const incoming='fs_in_'+crypto.randomBytes(32).toString('hex'),outgoing='fs_out_'+crypto.randomBytes(32).toString('hex'),slug='buyer-'+crypto.randomBytes(10).toString('hex');
  const {rows:[t]}=await c.query('INSERT INTO fs_tenants(slug,business_name,crm_webhook_url,incoming_hmac_secret,crm_webhook_hmac_secret) VALUES($1,$2,$3,$4,$5) RETURNING id',[slug,business,url,incoming,outgoing]);await c.query('UPDATE fs_accounts SET tenant_id=$2 WHERE buyer_id=$1',[user.id,t.id]);await c.query('COMMIT');return res.json({slug,incomingSecret:incoming,callbackSecret:outgoing,notice:'Save these in your integration. Use Recover signing keys if this response is lost; configuration remains saved.'});

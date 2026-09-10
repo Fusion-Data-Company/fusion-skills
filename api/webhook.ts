@@ -15,7 +15,7 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
  const hash=crypto.createHash('sha256').update(raw).digest('hex');
  const existing=await pool.query('SELECT id,input_hash,delivery_status,result FROM fs_jobs WHERE tenant_id=$1 AND request_id=$2',[tenant.id,requestId]);
  if(existing.rows[0])return res.status(existing.rows[0].input_hash===hash?200:409).json(existing.rows[0].input_hash===hash?{job:existing.rows[0]}:{error:'request_id_conflict'});
- const {rows:[account]}=await pool.query('SELECT buyer_id FROM fs_accounts WHERE tenant_id=$1 AND access_until>now() AND billing_status IN (\'active\',\'trialing\')',[tenant.id]);
+ const {rows:[account]}=await pool.query('SELECT buyer_id FROM fs_accounts WHERE tenant_id=$1 AND access_until>now() AND billing_status IN (\'active\',\'trialing\') AND billing_invoice_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM fs_payment_holds h WHERE h.invoice_id=fs_accounts.billing_invoice_id AND h.held)',[tenant.id]);
  if(!account)return res.status(402).json({error:'active_subscription_required'});
  const qualification=qualifyLead(payload);const routing=routeLead(qualification.score,payload,tenant.business_hours);
  const result={qualification,routing,response_draft:generateResponse(routing.action,tenant,payload,qualification),contact:payload.contact||{},permission:payload.permitted_response===true?'crm_review':'review_only',notice:'Rule-based assessment and draft, not a sent customer message.'};
