@@ -16,7 +16,7 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
  const sub=await stripe.subscriptions.retrieve(id);const buyerId=sub.metadata.buyer_id;const item=sub.items.data[0];
  if(!buyerId||sub.items.data.length!==1||item.price.id!==requireConfig('STRIPE_PRICE_ID')||item.price.unit_amount!==14900||item.price.currency!=='usd'||item.price.recurring?.interval!=='month')throw new Error('unrecognized_subscription');
  const until=['active','trialing'].includes(sub.status)?item.current_period_end:0;
- await c.query('UPDATE fs_accounts SET subscription_id=$2,billing_status=$3,access_until=to_timestamp($4),updated_at=now() WHERE buyer_id=$1 AND (subscription_id IS NULL OR subscription_id=$2 OR access_until<=now())',[buyerId,id,sub.status,until]);await c.query('COMMIT');return res.json({received:true});
+ await c.query('UPDATE fs_accounts SET subscription_id=$2,billing_status=$3,access_until=to_timestamp($4),cancel_at_period_end=$5,updated_at=now() WHERE buyer_id=$1 AND (subscription_id IS NULL OR subscription_id=$2 OR access_until<=now())',[buyerId,id,sub.status,until,sub.cancel_at_period_end]);await c.query('COMMIT');return res.json({received:true});
  }catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}
  }catch{return res.status(400).json({error:'billing_not_reconciled'});}
 }
