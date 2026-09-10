@@ -1,6 +1,7 @@
 import type {VercelRequest,VercelResponse} from '@vercel/node';
 import Stripe from 'stripe';
 import crypto from 'node:crypto';
+import {qualifyLead,routeLead,generateResponse} from '../lib/qualification';
 import {buyer,pool,requireConfig,callbackUrl} from '../lib/core';
 export default async function handler(req:VercelRequest,res:VercelResponse){
  res.setHeader('Cache-Control','no-store');
@@ -47,6 +48,21 @@ export default async function handler(req:VercelRequest,res:VercelResponse){
  await c.query('INSERT INTO fs_account_security_events(buyer_id,tenant_id,action) VALUES($1,$2,$3)',[user.id,tenant.id,body.action]);
  await c.query('COMMIT');return res.json({slug:tenant.slug,incomingSecret:tenant.incoming_hmac_secret,callbackSecret:tenant.crm_webhook_hmac_secret,notice:body.action==='rotate_incoming_key'?'Previous incoming key is invalid. Update your lead source before submitting again. CRM callback key is unchanged.':'Current keys recovered for this account. Keep them in your integration configuration.'});
  }catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}}
+ if(body.action==='submit_lead'){
+ const notes=typeof body.notes==='string'?body.notes.trim():'';
+ const requestId=String(body.requestId||'');
+ if(!notes||notes.length>20000||!/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(requestId))throw new Error('notes_and_request_id_required');
+ const {rows:[tenant]}=await pool.query("SELECT t.* FROM fs_tenants t JOIN fs_accounts a ON a.tenant_id=t.id WHERE a.buyer_id=$1 AND a.access_until>now() AND a.billing_status IN ('active','trialing')",[user.id]);
+ if(!tenant)throw new Error('configured_active_subscription_required');
+ const contact={name:String(body.name||'').trim().slice(0,200),email:String(body.email||'').trim().slice(0,254)};
+ const payload={notes,contact,permitted_response:body.permittedResponse===true};
+ const hash=crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+ const qualification=qualifyLead(payload),routing=routeLead(qualification.score,payload,tenant.business_hours);
+ const result={qualification,routing,response_draft:generateResponse(routing.action,tenant,payload,qualification),contact,permission:payload.permitted_response?'crm_review':'review_only',notice:'Rule-based assessment and draft, not a sent customer message.'};
+ const {rows:[job]}=await pool.query('INSERT INTO fs_jobs(tenant_id,request_id,input_hash,result) VALUES($1,$2,$3,$4) ON CONFLICT(tenant_id,request_id) DO UPDATE SET request_id=EXCLUDED.request_id RETURNING id,input_hash,delivery_status,result',[tenant.id,requestId,hash,JSON.stringify(result)]);
+ if(job.input_hash!==hash)return res.status(409).json({error:'request_id_conflict'});
+ return res.status(202).json({job});
+ }
  if(body.action==='configure'){
  const business=String(body.businessName||'').trim();if(!business||business.length>200)throw new Error('business_name_required');const url=callbackUrl(String(body.callbackUrl||''));
  const c=await pool.connect();try{await c.query('BEGIN');const {rows:[a]}=await c.query("SELECT * FROM fs_accounts WHERE buyer_id=$1 AND access_until>now() AND billing_status IN ('active','trialing') FOR UPDATE",[user.id]);if(!a)throw new Error('active_subscription_required');
